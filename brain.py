@@ -22,6 +22,24 @@ LEAK_TAU_NS = 50_000_000
 MAX_SPIKE_HISTORY = 10_000
 
 
+def get_brain_state_path() -> Path:
+    """Return a persistent state path outside PyInstaller's temporary bundle."""
+    if not getattr(sys, "frozen", False):
+        return Path(__file__).resolve().with_name("my_biological_brain.json")
+
+    app_name = "Bio-Tabula-Rasa"
+    if sys.platform == "win32":
+        base_dir = os.environ.get("LOCALAPPDATA") or os.environ.get("APPDATA")
+        data_dir = Path(base_dir) / app_name if base_dir else Path.home() / app_name
+    elif sys.platform == "darwin":
+        data_dir = Path.home() / "Library" / "Application Support" / app_name
+    else:
+        state_home = os.environ.get("XDG_STATE_HOME")
+        base_dir = Path(state_home) if state_home else Path.home() / ".local" / "state"
+        data_dir = base_dir / "bio-tabula-rasa"
+    return data_dir / "my_biological_brain.json"
+
+
 def _require_timestamp(current_time_ns: int) -> None:
     if not isinstance(current_time_ns, int) or isinstance(current_time_ns, bool):
         raise TypeError("current_time_ns must be an integer number of nanoseconds")

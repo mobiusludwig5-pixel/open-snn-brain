@@ -1,7 +1,6 @@
 """Streamlit dashboard for the interactive biological SNN."""
 
 import time
-from pathlib import Path
 
 import streamlit as st
 
@@ -10,10 +9,11 @@ from brain import (
     MAX_SIM_FREQUENCY_HZ,
     MIN_SIM_FREQUENCY_HZ,
     BiologicalBrain,
+    get_brain_state_path,
 )
 from translator import spikes_to_output, text_to_spikes
 
-STATE_FILE = Path(__file__).with_name("my_biological_brain.json")
+STATE_FILE = get_brain_state_path()
 
 st.set_page_config(page_title="Bio-Tabula-Rasa", page_icon="🧠", layout="wide")
 st.title("Bio-Tabula-Rasa")
