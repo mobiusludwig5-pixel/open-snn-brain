@@ -189,6 +189,7 @@ class BiologicalBrain:
             ]
         self._stress_level = 0.0
         self.health_status = "Stabil"
+        self.telemetry_paths: Dict[str, int] = {}
         self._max_ram_limit_gb = 2.0
         self.set_ram_limit(max_ram_limit_gb)
         self._last_decay_time_ns = 0
@@ -241,6 +242,15 @@ class BiologicalBrain:
             self._stress_level = float(level)
             if hasattr(self, "health_status"):
                 self._update_health_status()
+
+    def register_telemetry_path(self, metric_name: str, neuron_id: int) -> None:
+        """Remember which input neuron receives a physical telemetry metric."""
+        if not isinstance(metric_name, str) or not metric_name.strip():
+            raise ValueError("metric_name must be a non-empty string")
+        if neuron_id not in (1, 2):
+            raise ValueError("telemetry metrics must target input neuron 1 or 2")
+        with self._lock:
+            self.telemetry_paths[metric_name] = neuron_id
 
     def calculate_ram_usage(self) -> float:
         """Return the recursively counted object-graph size in megabytes."""
@@ -522,6 +532,7 @@ class BiologicalBrain:
                 "stress_level": self.stress_level,
                 "health_status": self.health_status,
                 "last_decay_time_ns": self._last_decay_time_ns,
+                "telemetry_paths": dict(self.telemetry_paths),
                 "neurons": [
                     {
                         "neuron_id": neuron.neuron_id,
@@ -582,6 +593,20 @@ class BiologicalBrain:
             stress_level = float(state["stress_level"])
             ram_limit = float(state["max_ram_limit_gb"])
             last_decay_time_ns = int(state["last_decay_time_ns"])
+            telemetry_paths = state.get("telemetry_paths", {})
+            if not isinstance(telemetry_paths, dict):
+                raise ValueError("telemetry_paths must be a dictionary")
+            parsed_telemetry_paths: Dict[str, int] = {}
+            for metric_name, neuron_id in telemetry_paths.items():
+                if (
+                    not isinstance(metric_name, str)
+                    or not metric_name.strip()
+                    or not isinstance(neuron_id, int)
+                    or isinstance(neuron_id, bool)
+                    or neuron_id not in (1, 2)
+                ):
+                    raise ValueError("Invalid saved telemetry path")
+                parsed_telemetry_paths[metric_name] = neuron_id
             if len(neuron_states) != 10:
                 raise ValueError("Saved brain state must contain exactly 10 neurons")
             if not 0.0 <= stress_level <= 100.0:
@@ -659,6 +684,7 @@ class BiologicalBrain:
             self.stress_level = stress_level
             self.max_ram_limit_gb = ram_limit
             self._last_decay_time_ns = last_decay_time_ns
+            self.telemetry_paths = parsed_telemetry_paths
             self._events.clear()
             self._rebuild_outgoing()
             self._update_health_status()

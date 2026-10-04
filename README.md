@@ -11,9 +11,13 @@ streamlit run app.py
 ```
 
 `brain.py` enthält die threadsichere SNN-Engine, `translator.py` die
-zeitgetaktete Text-/Spike-Übersetzung und `app.py` das Streamlit-Dashboard.
+zeitgetaktete Text-/Spike-Übersetzung sowie `telemetry_to_spikes()` für
+strukturierte physische Messwerte und `app.py` das Streamlit-Dashboard. Das
+Dashboard simuliert Akkuwerte und Sensorabstände; externe Adapter können
+numerische Telemetrie-Dictionaries an `telemetry_to_spikes()` übergeben.
 Der Zustand wird atomar in `my_biological_brain.json` gespeichert und beim
-nächsten Start wieder geladen. In einem Desktop-Build liegt die Datei dauerhaft
+nächsten Start werden auch die registrierten Telemetrie-Eingangspfade geladen.
+In einem Desktop-Build liegt die Datei dauerhaft
 im Benutzerprofil (`%LOCALAPPDATA%/Bio-Tabula-Rasa` unter Windows,
 `~/Library/Application Support/Bio-Tabula-Rasa` unter macOS und
 `$XDG_STATE_HOME/bio-tabula-rasa` bzw. `~/.local/state/bio-tabula-rasa` unter

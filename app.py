@@ -11,7 +11,7 @@ from brain import (
     BiologicalBrain,
     get_brain_state_path,
 )
-from translator import spikes_to_output, text_to_spikes
+from translator import spikes_to_output, telemetry_to_spikes, text_to_spikes
 
 STATE_FILE = get_brain_state_path()
 
@@ -114,6 +114,50 @@ with st.form("translator_form"):
         "Text als Spikes einspeisen", type="primary", width="stretch"
     )
 
+st.subheader("🛰️ Telemetrie- & Hardware-Schnittstelle")
+telemetry_columns = st.columns(2)
+with telemetry_columns[0]:
+    battery_level = st.slider(
+        "🔋 Simulierte Akkuspannung (%)",
+        min_value=0.0,
+        max_value=100.0,
+        value=100.0,
+        step=1.0,
+        key="telemetry_battery_level",
+    )
+with telemetry_columns[1]:
+    sensor_distance = st.slider(
+        "📏 Physischer Sensorabstand (cm)",
+        min_value=0.0,
+        max_value=200.0,
+        value=200.0,
+        step=1.0,
+        key="telemetry_sensor_distance",
+    )
+
+telemetry_values = {
+    "battery_level": battery_level,
+    "distance_sensor_cm": sensor_distance,
+}
+telemetry_changed = (
+    st.session_state.get("last_telemetry_values") != telemetry_values
+)
+if battery_level < 30.0:
+    telemetry_status = "Zustand: Nahrungsknappheit (Stress-Spikes aktiv)"
+elif sensor_distance < 20.0:
+    telemetry_status = "Zustand: Physische Kollisionsgefahr!"
+else:
+    telemetry_status = "Zustand: Telemetrie stabil"
+st.info(telemetry_status)
+telemetry_rates = st.session_state.get("telemetry_rates", {})
+if telemetry_rates:
+    st.caption(
+        "Einspeiseraten: "
+        + " · ".join(
+            f"{metric}: {rate:.1f} Hz" for metric, rate in telemetry_rates.items()
+        )
+    )
+
 st.subheader("Generierter KI-Output")
 output_placeholder = st.empty()
 
@@ -162,6 +206,15 @@ elif incorrect_clicked:
 elif therapy_clicked:
     brain.run_therapy(sim_frequency)
     st.session_state.activity_log.append("Therapie-Modus abgeschlossen.")
+    brain.save_brain_state(str(STATE_FILE))
+elif telemetry_changed:
+    telemetry_rates = telemetry_to_spikes(telemetry_values, brain)
+    st.session_state.telemetry_rates = telemetry_rates
+    st.session_state.last_telemetry_values = telemetry_values
+    st.session_state.activity_log.append(
+        "Telemetrie eingespeist: "
+        + ", ".join(f"{metric} {rate:.1f} Hz" for metric, rate in telemetry_rates.items())
+    )
     brain.save_brain_state(str(STATE_FILE))
 elif state_changed:
     brain.save_brain_state(str(STATE_FILE))
