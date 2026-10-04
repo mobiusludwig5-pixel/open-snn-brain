@@ -26,6 +26,11 @@ sim_frequency = st.sidebar.slider(
     key="sim_frequency",
 )
 st.sidebar.caption(f"Tickdauer: {1.0 / sim_frequency:.3f} s")
+if sim_frequency > 1000:
+    st.sidebar.warning(
+        "⚠️ Achtung: Du verlässt die biologische Taktgeschwindigkeit! Die Lernzeiten und Exponenten entsprechen ab jetzt nicht mehr der realität. Der Super-Hirn-Modus ist aktiv."
+    )
+st.sidebar.caption("Habe viel Spaß mit dem Super-Hirn!")
 
 if "brain" not in st.session_state:
     st.session_state.brain = SpikingNeuralNetwork(neuron_count=10)

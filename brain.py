@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from typing import Callable, Deque, List, Optional, Tuple
 
 MIN_SIM_FREQUENCY_HZ = 0.01
-MAX_SIM_FREQUENCY_HZ = 1000.0
+MAX_SIM_FREQUENCY_HZ = 5000.0
 DEFAULT_SIM_FREQUENCY_HZ = 200.0
 STDP_WINDOW_MS = 50.0
 STP_RECOVERY_MS = 200.0
