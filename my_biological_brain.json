@@ -1,0 +1,261 @@
+{
+  "version": 1,
+  "max_ram_limit_gb": 2.0,
+  "stress_level": 0.0,
+  "health_status": "Stabil",
+  "last_decay_time_ns": 0,
+  "neurons": [
+    {
+      "neuron_id": 0,
+      "charge": 0.0,
+      "threshold": 1.0,
+      "last_spike_time": 0,
+      "last_impulse_time_ns": 0,
+      "has_received_impulse": false,
+      "spike_counter": 0,
+      "spike_times_ns": []
+    },
+    {
+      "neuron_id": 1,
+      "charge": 0.0,
+      "threshold": 1.0,
+      "last_spike_time": 0,
+      "last_impulse_time_ns": 0,
+      "has_received_impulse": false,
+      "spike_counter": 0,
+      "spike_times_ns": []
+    },
+    {
+      "neuron_id": 2,
+      "charge": 0.0,
+      "threshold": 1.0,
+      "last_spike_time": 0,
+      "last_impulse_time_ns": 0,
+      "has_received_impulse": false,
+      "spike_counter": 0,
+      "spike_times_ns": []
+    },
+    {
+      "neuron_id": 3,
+      "charge": 0.0,
+      "threshold": 1.0,
+      "last_spike_time": 0,
+      "last_impulse_time_ns": 0,
+      "has_received_impulse": false,
+      "spike_counter": 0,
+      "spike_times_ns": []
+    },
+    {
+      "neuron_id": 4,
+      "charge": 0.0,
+      "threshold": 1.0,
+      "last_spike_time": 0,
+      "last_impulse_time_ns": 0,
+      "has_received_impulse": false,
+      "spike_counter": 0,
+      "spike_times_ns": []
+    },
+    {
+      "neuron_id": 5,
+      "charge": 0.0,
+      "threshold": 1.0,
+      "last_spike_time": 0,
+      "last_impulse_time_ns": 0,
+      "has_received_impulse": false,
+      "spike_counter": 0,
+      "spike_times_ns": []
+    },
+    {
+      "neuron_id": 6,
+      "charge": 0.0,
+      "threshold": 1.0,
+      "last_spike_time": 0,
+      "last_impulse_time_ns": 0,
+      "has_received_impulse": false,
+      "spike_counter": 0,
+      "spike_times_ns": []
+    },
+    {
+      "neuron_id": 7,
+      "charge": 0.0,
+      "threshold": 1.0,
+      "last_spike_time": 0,
+      "last_impulse_time_ns": 0,
+      "has_received_impulse": false,
+      "spike_counter": 0,
+      "spike_times_ns": []
+    },
+    {
+      "neuron_id": 8,
+      "charge": 0.0,
+      "threshold": 1.0,
+      "last_spike_time": 0,
+      "last_impulse_time_ns": 0,
+      "has_received_impulse": false,
+      "spike_counter": 0,
+      "spike_times_ns": []
+    },
+    {
+      "neuron_id": 9,
+      "charge": 0.0,
+      "threshold": 1.0,
+      "last_spike_time": 0,
+      "last_impulse_time_ns": 0,
+      "has_received_impulse": false,
+      "spike_counter": 0,
+      "spike_times_ns": []
+    }
+  ],
+  "synapses": [
+    {
+      "source_id": 0,
+      "target_id": 3,
+      "weight": 0.5,
+      "last_activation_time": 0
+    },
+    {
+      "source_id": 0,
+      "target_id": 4,
+      "weight": 0.5,
+      "last_activation_time": 0
+    },
+    {
+      "source_id": 0,
+      "target_id": 5,
+      "weight": 0.5,
+      "last_activation_time": 0
+    },
+    {
+      "source_id": 0,
+      "target_id": 6,
+      "weight": 0.5,
+      "last_activation_time": 0
+    },
+    {
+      "source_id": 0,
+      "target_id": 7,
+      "weight": 0.5,
+      "last_activation_time": 0
+    },
+    {
+      "source_id": 1,
+      "target_id": 3,
+      "weight": 0.5,
+      "last_activation_time": 0
+    },
+    {
+      "source_id": 1,
+      "target_id": 4,
+      "weight": 0.5,
+      "last_activation_time": 0
+    },
+    {
+      "source_id": 1,
+      "target_id": 5,
+      "weight": 0.5,
+      "last_activation_time": 0
+    },
+    {
+      "source_id": 1,
+      "target_id": 6,
+      "weight": 0.5,
+      "last_activation_time": 0
+    },
+    {
+      "source_id": 1,
+      "target_id": 7,
+      "weight": 0.5,
+      "last_activation_time": 0
+    },
+    {
+      "source_id": 2,
+      "target_id": 3,
+      "weight": 0.5,
+      "last_activation_time": 0
+    },
+    {
+      "source_id": 2,
+      "target_id": 4,
+      "weight": 0.5,
+      "last_activation_time": 0
+    },
+    {
+      "source_id": 2,
+      "target_id": 5,
+      "weight": 0.5,
+      "last_activation_time": 0
+    },
+    {
+      "source_id": 2,
+      "target_id": 6,
+      "weight": 0.5,
+      "last_activation_time": 0
+    },
+    {
+      "source_id": 2,
+      "target_id": 7,
+      "weight": 0.5,
+      "last_activation_time": 0
+    },
+    {
+      "source_id": 3,
+      "target_id": 8,
+      "weight": 0.5,
+      "last_activation_time": 0
+    },
+    {
+      "source_id": 3,
+      "target_id": 9,
+      "weight": 0.5,
+      "last_activation_time": 0
+    },
+    {
+      "source_id": 4,
+      "target_id": 8,
+      "weight": 0.5,
+      "last_activation_time": 0
+    },
+    {
+      "source_id": 4,
+      "target_id": 9,
+      "weight": 0.5,
+      "last_activation_time": 0
+    },
+    {
+      "source_id": 5,
+      "target_id": 8,
+      "weight": 0.5,
+      "last_activation_time": 0
+    },
+    {
+      "source_id": 5,
+      "target_id": 9,
+      "weight": 0.5,
+      "last_activation_time": 0
+    },
+    {
+      "source_id": 6,
+      "target_id": 8,
+      "weight": 0.5,
+      "last_activation_time": 0
+    },
+    {
+      "source_id": 6,
+      "target_id": 9,
+      "weight": 0.5,
+      "last_activation_time": 0
+    },
+    {
+      "source_id": 7,
+      "target_id": 8,
+      "weight": 0.5,
+      "last_activation_time": 0
+    },
+    {
+      "source_id": 7,
+      "target_id": 9,
+      "weight": 0.5,
+      "last_activation_time": 0
+    }
+  ]
+}

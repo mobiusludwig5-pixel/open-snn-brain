@@ -1,2 +1,16 @@
-# open-snn-brain
-Eine biologisch inspirierte KI-Grundform (Tabula Rasa) basierend auf einem Spiking Neural Network (SNN). Lernt ohne starren Code rein durch digitale Neuroplastizität (STDP) und Reiz-Feedback – bereit, erzogen zu werden (z.B. für Namenstests oder autonome Minecraft-Agenten).
+# bio-tabula-rasa
+
+Ein ereignisgesteuertes Spiking Neural Network, das über benutzergesteuertes
+Feedback und begrenzte STDP lernt.
+
+## Starten
+
+```bash
+python -m pip install -r requirements.txt
+streamlit run app.py
+```
+
+`brain.py` enthält die threadsichere SNN-Engine, `translator.py` die
+zeitgetaktete Text-/Spike-Übersetzung und `app.py` das Streamlit-Dashboard.
+Der Zustand wird atomar in `my_biological_brain.json` neben `app.py`
+gespeichert und beim nächsten Start wieder geladen.

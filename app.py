@@ -1,6 +1,7 @@
-"""Streamlit control panel for the persistent Bio-Tabula-Rasa SNN."""
+"""Streamlit dashboard for the interactive biological SNN."""
 
-import random
+import time
+from pathlib import Path
 
 import streamlit as st
 
@@ -8,16 +9,34 @@ from brain import (
     DEFAULT_SIM_FREQUENCY_HZ,
     MAX_SIM_FREQUENCY_HZ,
     MIN_SIM_FREQUENCY_HZ,
-    SpikingNeuralNetwork,
+    BiologicalBrain,
 )
+from translator import spikes_to_output, text_to_spikes
 
+STATE_FILE = Path(__file__).with_name("my_biological_brain.json")
 
 st.set_page_config(page_title="Bio-Tabula-Rasa", page_icon="🧠", layout="wide")
 st.title("Bio-Tabula-Rasa")
-st.caption("Ein digitales, durch Reize und Neuroplastizität lernendes Nervensystem.")
+st.caption(
+    "Ein ereignisgesteuertes Spiking Neural Network, das durch Feedback lernt."
+)
+
+if "brain" not in st.session_state:
+    st.session_state.brain = BiologicalBrain()
+    if STATE_FILE.exists():
+        st.session_state.brain.load_brain_state(str(STATE_FILE))
+    else:
+        st.session_state.brain.save_brain_state(str(STATE_FILE))
+if "activity_log" not in st.session_state:
+    st.session_state.activity_log = []
+if "generated_output" not in st.session_state:
+    st.session_state.generated_output = ""
+
+brain: BiologicalBrain = st.session_state.brain
+previous_ram_limit = brain.max_ram_limit_gb
 
 sim_frequency = st.sidebar.slider(
-    "Simulationsfrequenz",
+    "Taktfrequenz",
     min_value=MIN_SIM_FREQUENCY_HZ,
     max_value=MAX_SIM_FREQUENCY_HZ,
     value=DEFAULT_SIM_FREQUENCY_HZ,
@@ -25,106 +44,155 @@ sim_frequency = st.sidebar.slider(
     format="%.2f Hz",
     key="sim_frequency",
 )
-st.sidebar.caption(f"Tickdauer: {1.0 / sim_frequency:.3f} s")
-if sim_frequency > 1000:
+if sim_frequency > 1000.0:
     st.sidebar.warning(
-        "⚠️ Achtung: Du verlässt die biologische Taktgeschwindigkeit! Die Lernzeiten und Exponenten entsprechen ab jetzt nicht mehr der realität. Der Super-Hirn-Modus ist aktiv."
+        "⚠️ Achtung: Du verlässt die biologische Taktgeschwindigkeit! Die Lernzeiten und Exponenten entsprechen ab jetzt nicht mehr der Realität. Der Super-Hirn-Modus ist aktiv."
     )
 st.sidebar.caption("Habe viel Spaß mit dem Super-Hirn!")
 
-if "brain" not in st.session_state:
-    st.session_state.brain = SpikingNeuralNetwork(neuron_count=10)
-if "activity_log" not in st.session_state:
-    st.session_state.activity_log = []
+max_ram_limit_gb = st.sidebar.slider(
+    "Maximales RAM-Limit",
+    min_value=1.0,
+    max_value=16.0,
+    value=brain.max_ram_limit_gb,
+    step=0.1,
+    format="%.1f GB",
+    key="max_ram_limit_gb",
+)
+brain.set_ram_limit(max_ram_limit_gb)
+decay_changed = brain.update_time()
 
-brain = st.session_state.brain
+live_column, plasticity_column = st.columns((1, 2))
+with live_column:
+    st.subheader("Live-Spikes")
+    charge_chart = st.empty()
+
+with plasticity_column:
+    st.subheader("Synaptische Plastizität")
+    synapse_table = st.empty()
 
 
-def collect_brain_events() -> None:
-    st.session_state.activity_log.extend(brain.drain_events())
-    st.session_state.activity_log = st.session_state.activity_log[-200:]
-
-
-left, right = st.columns(2)
-with left:
-    st.subheader("Neuronale Aktivität")
-    chart_placeholder = st.empty()
-
-with right:
-    st.subheader("Textreiz & Feedback")
-    with st.form("text_input_form"):
-        text_input = st.text_input(
-            "Text als neuronalen Reiz eingeben",
-            placeholder="Wie heißt du?",
-            max_chars=64,
-        )
-        text_submitted = st.form_submit_button(
-            "Text in Spikes umwandeln", type="primary", use_container_width=True
-        )
-
-    feedback_columns = st.columns(2)
-    reward_clicked = feedback_columns[0].button(
-        "🟢 BELOHNEN", use_container_width=True
+def render_charge_chart() -> None:
+    charge_data = [
+        {"Neuron": f"Neuron {neuron.neuron_id}", "Ladung": neuron.charge}
+        for neuron in brain.neurons
+    ]
+    charge_chart.bar_chart(
+        charge_data, x="Neuron", y="Ladung", height=350, width="stretch"
     )
-    punishment_clicked = feedback_columns[1].button(
-        "🔴 BESTRAFEN", use_container_width=True
+
+
+def render_synapse_table() -> None:
+    synapse_data = [
+        {
+            "Quelle": edge.source.neuron_id,
+            "Ziel": edge.target.neuron_id,
+            "Gewicht": round(edge.weight, 4),
+            "Letzte Aktivierung (ns)": edge.last_activation_time,
+        }
+        for edge in brain.synapses
+    ]
+    synapse_table.dataframe(
+        synapse_data,
+        width="stretch",
+        hide_index=True,
+        height=350,
     )
-    random_stimulus_clicked = st.button(
-        "Zufälligen Reiz einspeisen", use_container_width=True
+
+
+render_charge_chart()
+render_synapse_table()
+
+st.subheader("Interaktion")
+with st.form("translator_form"):
+    user_input = st.text_input(
+        "Frage oder Codesignal an das Netzwerk",
+        placeholder="Zum Beispiel: Wie heißt du?",
+        max_chars=256,
     )
-    reset_clicked = st.button("Gehirn zurücksetzen", use_container_width=True)
-    progress_placeholder = st.empty()
+    text_submitted = st.form_submit_button(
+        "Text als Spikes einspeisen", type="primary", width="stretch"
+    )
 
-st.subheader("Biologisches Aktivitäten-Protokoll")
-log_placeholder = st.empty()
+st.subheader("Generierter KI-Output")
+output_placeholder = st.empty()
 
+st.subheader("Konditionierung")
+action_columns = st.columns(3)
+with action_columns[0]:
+    correct_clicked = st.button("🟢 KORREKT (Pfad verstärken)", width="stretch")
+with action_columns[1]:
+    incorrect_clicked = st.button("🔴 INKORREKT (Pfad schwächen)", width="stretch")
+with action_columns[2]:
+    therapy_clicked = st.button("💊 THERAPIE-MODUS", width="stretch")
 
-def render_chart() -> None:
-    charges = {
-        f"Neuron {neuron.neuron_id}": neuron.charge for neuron in brain.neurons
-    }
-    chart_placeholder.bar_chart(charges, y_label="Ladung", x_label="Neuron")
+state_changed = brain.max_ram_limit_gb != previous_ram_limit or decay_changed
+if text_submitted and user_input:
+    last_chart_update = [time.perf_counter()]
 
+    def refresh_live_chart(completed: int, total: int) -> None:
+        now = time.perf_counter()
+        if completed == 1 or completed == total or now - last_chart_update[0] >= 0.1:
+            render_charge_chart()
+            last_chart_update[0] = now
 
-def render_log() -> None:
+    spike_count = text_to_spikes(
+        user_input,
+        brain,
+        sim_frequency,
+        progress_callback=refresh_live_chart,
+    )
+    st.session_state.generated_output = spikes_to_output(brain)
+    st.session_state.activity_log.append(
+        f"Textreiz abgeschlossen: {spike_count} Impulse für {len(user_input)} Zeichen."
+    )
+    brain.save_brain_state(str(STATE_FILE))
+elif correct_clicked:
+    changed = brain.strengthen_active_synapses()
+    st.session_state.activity_log.append(
+        f"Manuelles Lob: {changed} aktive Synapsen verstärkt."
+    )
+    brain.save_brain_state(str(STATE_FILE))
+elif incorrect_clicked:
+    changed = brain.weaken_active_synapses()
+    st.session_state.activity_log.append(
+        f"Manuelle Bestrafung: {changed} aktive Synapsen geschwächt."
+    )
+    brain.save_brain_state(str(STATE_FILE))
+elif therapy_clicked:
+    brain.run_therapy(sim_frequency)
+    st.session_state.activity_log.append("Therapie-Modus abgeschlossen.")
+    brain.save_brain_state(str(STATE_FILE))
+elif state_changed:
+    brain.save_brain_state(str(STATE_FILE))
+
+st.session_state.activity_log.extend(brain.drain_events())
+ram_usage_mb = brain.calculate_ram_usage()
+st.sidebar.subheader("System-Metriken")
+st.sidebar.metric("Aktuelle Frequenz", f"{sim_frequency:.2f} Hz")
+st.sidebar.metric(
+    "RAM-Verbrauch", f"{ram_usage_mb:.3f} MB / {ram_usage_mb * 1000:.1f} KB"
+)
+st.sidebar.metric("Stresslevel", f"{brain.stress_level:.1f}%")
+st.sidebar.metric("Zustand", brain.health_status)
+
+render_charge_chart()
+render_synapse_table()
+output_placeholder.text_area(
+    "Ausgabe aus den Spike-Mustern der Output-Neuronen 8 und 9",
+    value=st.session_state.generated_output,
+    placeholder="Noch kein Output-Spike-Muster vorhanden.",
+    height=120,
+    disabled=True,
+)
+st.caption(
+    "Ausgaberegel: Unter 10 Hz entstehen die Niedrigfrequenz-Tokens; "
+    "ab 10 Hz die Hochfrequenz-Tokens. Sieben Output-Spikes können zusätzlich "
+    "als 7-Bit-ASCII-Zeichen dekodiert werden."
+)
+
+with st.expander("System-Log", expanded=False):
     if st.session_state.activity_log:
-        log_placeholder.text("\n".join(reversed(st.session_state.activity_log[-30:])))
+        st.text("\n".join(reversed(st.session_state.activity_log)))
     else:
-        log_placeholder.caption("Noch keine Aktivität.")
-
-
-def refresh_dashboard() -> None:
-    collect_brain_events()
-    render_chart()
-    render_log()
-
-
-if reset_clicked:
-    st.session_state.brain = SpikingNeuralNetwork(neuron_count=10)
-    st.session_state.activity_log = ["Gehirn mit 10 Neuronen zurückgesetzt."]
-    brain = st.session_state.brain
-elif text_submitted and text_input:
-    def update_text_progress(completed: int, total: int, character: str) -> None:
-        progress_placeholder.progress(
-            completed / total,
-            text=f"Zeichen {completed}/{total}: {character!r}",
-        )
-        refresh_dashboard()
-
-    brain.encode_text(
-        text_input,
-        sim_frequency=sim_frequency,
-        input_neuron_id=0,
-        progress_callback=update_text_progress,
-    )
-    progress_placeholder.empty()
-elif reward_clicked:
-    brain.apply_reward(sim_frequency=sim_frequency)
-elif punishment_clicked:
-    brain.apply_punishment(sim_frequency=sim_frequency)
-elif random_stimulus_clicked:
-    brain.stimulate(
-        random.randrange(len(brain.neurons)), sim_frequency=sim_frequency
-    )
-
-refresh_dashboard()
+        st.caption("Noch keine Spike- oder Lernereignisse.")
